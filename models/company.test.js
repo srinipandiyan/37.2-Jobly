@@ -87,6 +87,86 @@ describe("findAll", function () {
   });
 });
 
+test("works: filters by case-insensitve name", async function () {
+  let companies = await Company.findAll({ name: "c1" });
+  expect(companies).toEqual([
+    {
+      handle: "c1",
+      name: "C1",
+      description: "Desc1",
+      numEmployees: 1,
+      logoUrl: "http://c1.img",
+    },
+  ]);
+});
+
+test("throws bad request error, if min > max employees", async function () {
+  try {
+    await Company.findAll({ minEmployees: 10000, maxEmployees: 590 });
+    fail();
+  } catch (err) {
+    expect(err instanceof BadRequestError).toBeTruthy();
+  }
+});
+
+test("works: filters by min employees", async function () {
+  let companies = await Company.findAll({ minEmployees: 2 });
+  expect(companies).toEqual([
+    {
+      handle: "c2",
+      name: "C2",
+      description: "Desc2",
+      numEmployees: 2,
+      logoUrl: "http://c2.img",
+    },
+    {
+      handle: "c3",
+      name: "C3",
+      description: "Desc3",
+      numEmployees: 3,
+      logoUrl: "http://c3.img",
+    },
+  ]);
+});
+
+test("works: filters by max employees", async function () {
+  let companies = await Company.findAll({ maxEmployees: 2 });
+  expect(companies).toEqual([
+    {
+      handle: "c1",
+      name: "C1",
+      description: "Desc1",
+      numEmployees: 1,
+      logoUrl: "http://c1.img",
+    },
+    {
+      handle: "c2",
+      name: "C2",
+      description: "Desc2",
+      numEmployees: 2,
+      logoUrl: "http://c2.img",
+    },
+  ]);
+});
+
+test("works: filters by min and max employees", async function () {
+  let companies = await Company.findAll(
+      { minEmployees: 2, maxEmployees: 2 });
+  expect(companies).toEqual([
+    {
+      handle: "c2",
+      name: "C2",
+      description: "Desc2",
+      numEmployees: 2,
+      logoUrl: "http://c2.img",
+    },
+  ]);
+});
+
+test("works: returns empty list with no matching results", async function () {
+  let companies = await Company.findAll({ name: "CHOAM Corps" });
+  expect(companies).toEqual([]);
+});
 /************************************** get */
 
 describe("get", function () {

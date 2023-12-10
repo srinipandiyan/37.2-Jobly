@@ -45,20 +45,57 @@ class Company {
   }
 
   /** Find all companies.
+   * searchFilters:
+   *  name (case-insensitive with partial matching)
+   *  minEmployees (if greater than maxEmployees, throw error)
+   *  maxEmployees
    *
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
 
-  static async findAll() {
-    const companiesRes = await db.query(
-          `SELECT handle,
+  static async findAll(searchFilters = {}) {
+    let baseQuery = `SELECT handle,
                   name,
                   description,
                   num_employees AS "numEmployees",
                   logo_url AS "logoUrl"
-           FROM companies
-           ORDER BY name`);
-    return companiesRes.rows;
+           FROM companies`;
+    
+    let whereExpressions = [];
+    let queryValues = [];
+
+    const { name, minEmployees, maxEmployees } = searchFilters;
+
+    // Filter terms are added to whereExpressions and queryValues by selection so correct database query can be made
+    if (name) {
+      queryValues.push(`%${name}%`);
+      whereExpressions.push(`name ILIKE $${queryValues.length}`);
+    }
+
+    // Throw error for edge case where min employees is greater than maximum employees
+    if (minEmployees > maxEmployees) {
+      throw new BadRequestError("Minimum employees cannot be exceed maximum number of employees.");
+    }
+
+    minEmployees !== undefined && (
+      queryValues.push(minEmployees),
+      whereExpressions.push(`num_employees >= $${queryValues.length}`)
+    );
+
+    maxEmployees !== undefined && (
+      queryValues.push(maxEmployees),
+      whereExpressions.push(`num_employees <= $${queryValues.length}`)
+    );
+
+    if (whereExpressions.length > 0) {
+      baseQuery += " WHERE " + whereExpressions.join(" AND ");
+    }
+
+    // Make query based on all avaiable filter parameters and return query results
+
+    baseQuery += " ORDER BY name";
+    const results = await db.query(baseQuery, queryValues);
+    return results.rows;
   }
 
   /** Given a company handle, return data about company.
