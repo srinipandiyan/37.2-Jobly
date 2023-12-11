@@ -42,8 +42,46 @@ function ensureLoggedIn(req, res, next) {
   }
 }
 
+/**
+ * Middleware to use when verifying logged-in user as admin
+ * if not, raises Unauthorized.
+ */
+
+function verifyAdmin(req, res, next){
+  try{
+    const user = res.locals.user;
+    // Throw Unauthorized error if not logged in user or not admin
+    if (!user || !user.isAdmin){
+      throw new UnauthorizedError();
+    }
+    return next();
+  } catch (err) {
+    return next(err)
+  }
+}
+
+/**
+ * Middleware to use when verifying user or admin status of user
+ * if not, raises Unauthorized.
+ */
+
+function verifyUserOrAdmin(req, res, next){
+  try{
+    const user = res.locals.user;
+    // Throw Unauthorized error if not logged in and neither the correct user nor an admin
+    if (!(user && (user.username === req.params.username || user.isAdmin )) ) {
+      throw new UnauthorizedError();
+    }
+    return next();
+  } catch (err) {
+    return next(err)
+  }
+}
+
 
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
+  verifyAdmin,
+  verifyUserOrAdmin
 };

@@ -5,6 +5,8 @@ const { UnauthorizedError } = require("../expressError");
 const {
   authenticateJWT,
   ensureLoggedIn,
+  verifyAdmin,
+  verifyUserOrAdmin
 } = require("./auth");
 
 
@@ -77,4 +79,77 @@ describe("ensureLoggedIn", function () {
     };
     ensureLoggedIn(req, res, next);
   });
+});
+
+describe("verifyAdmin", function() {
+  test("works", function () {
+    expect.assertions(1);
+    const req = {};
+    const res = { locals: { user: { username: "testuser", isAdmin: true } } };
+    const next = function (err) {
+      expect(err).toBeFalsy();
+    };
+    verifyAdmin(req, res, next);
+  })
+
+  test("throws unauthorized error if user is not admin", function () {
+    expect.assertions(1);
+    const req = {};
+    const res = { locals: { user: { username: "testuser", isAdmin: false } } };
+    const next = function (err) {
+      expect(err instanceof UnauthorizedError).toBeTruthy();
+    };
+    verifyAdmin(req, res, next);
+  });
+
+  test("throws unauthorized error if user is anonymous", function () {
+    expect.assertions(1);
+    const req = {};
+    const res = { locals: {} };
+    const next = function (err) {
+      expect(err instanceof UnauthorizedError).toBeTruthy();
+    };
+    verifyAdmin(req, res, next);
+  });
+});
+
+describe("verifyUserOrAdmin", function () {
+  test("works: verify as admin", function () {
+    expect.assertions(1);
+    const req = { params: { username: "testuser" } };
+    const res = { locals: { user: {username: "testadmin", isAdmin: true }}}
+    const next = function (err) {
+      expect(err).toBeFalsy();
+    }
+    verifyUserOrAdmin(req, res, next);
+  })
+
+  test("works: verify as correct user", function () {
+    expect.assertions(1);
+    const req = { params: { username: "testuser" } };
+    const res = { locals: { user: {username: "testuser", isAdmin: false }}}
+    const next = function (err) {
+      expect(err).toBeFalsy();
+    }
+    verifyUserOrAdmin(req, res, next);
+  })
+  test("throws unauthorized error if neither correct user nor admin", function () {
+    expect.assertions(1);
+    const req = { params: { username: "testuser" } };
+    const res = { locals: { user: {username: "unauth", isAdmin: false }}}
+    const next = function (err) {
+      expect(err instanceof UnauthorizedError).toBeTruthy();
+    }
+    verifyUserOrAdmin(req, res, next);
+  })
+
+  test("throws unauthorized error if user is anonymous", function () {
+    expect.assertions(1);
+    const req = { params: { username: "testuser" } };
+    const res = { locals: {} }
+    const next = function (err) {
+      expect(err instanceof UnauthorizedError).toBeTruthy();
+    }
+    verifyUserOrAdmin(req, res, next);
+  })
 });
