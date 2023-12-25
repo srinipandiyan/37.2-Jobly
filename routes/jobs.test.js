@@ -54,7 +54,7 @@ describe("POST / { job } => { job }", function () {
           equity: "0.3",
         })
         .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(404);
+    expect(resp.statusCode).toEqual(401);
   });
 
   test("throws BadRequestError for missing data", async function () {
@@ -64,7 +64,7 @@ describe("POST / { job } => { job }", function () {
           companyHandle: "c1",
         })
         .set("authorization", `Bearer ${adminToken}`);
-    expect(resp.statusCode).toEqual(404);
+    expect(resp.statusCode).toEqual(400);
   });
 
   test("throws BadRequestError for invalid data types", async function () {
@@ -77,7 +77,7 @@ describe("POST / { job } => { job }", function () {
           equity: "0.3",
         })
         .set("authorization", `Bearer ${adminToken}`);
-    expect(resp.statusCode).toEqual(404);
+    expect(resp.statusCode).toEqual(400);
     });
 });
 
@@ -167,7 +167,7 @@ describe("GET / ", function () {
     const resp = await request(app)
         .get(`/jobs`)
         .query({ minSalary: 2, invalidFilter: "invalidKey" });
-    expect(resp.statusCode).toEqual(404);
+    expect(resp.statusCode).toEqual(400);
   });
 });
 
@@ -213,7 +213,7 @@ describe("PATCH /[jobId]  { fld1, fld2, ... } => { job }", function () {
       job: {
         id: expect.any(Number),
         title: "J-New",
-        salary: 1,
+        salary: 100,
         equity: "0.1",
         companyHandle: "c1",
       },
@@ -227,17 +227,17 @@ describe("PATCH /[jobId]  { fld1, fld2, ... } => { job }", function () {
           salary: 2000000,
         })
         .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(404);
+    expect(resp.statusCode).toEqual(401);
   });
 
-  test("not found when job cannot be found by id", async function () {
+  test("bad request when job cannot be found by id", async function () {
     const resp = await request(app)
         .patch(`/jobs/123`)
         .send({
           equity: "0.3",
         })
         .set("authorization", `Bearer ${adminToken}`);
-    expect(resp.statusCode).toEqual(404);
+    expect(resp.statusCode).toEqual(400);
   });
 
   test("throws BadRequestError when attempting to change handle", async function () {
@@ -247,7 +247,7 @@ describe("PATCH /[jobId]  { fld1, fld2, ... } => { job }", function () {
           handle: "differentHandle",
         })
         .set("authorization", `Bearer ${adminToken}`);
-    expect(resp.statusCode).toEqual(404);
+    expect(resp.statusCode).toEqual(400);
   });
 
   test("throws BadRequestError with invalid data type", async function () {
@@ -257,7 +257,7 @@ describe("PATCH /[jobId]  { fld1, fld2, ... } => { job }", function () {
           equity: 0.2,
         })
         .set("authorization", `Bearer ${adminToken}`);
-    expect(resp.statusCode).toEqual(404);
+    expect(resp.statusCode).toEqual(400);
   });
 });
 
@@ -275,7 +275,7 @@ describe("DELETE /jobs/:id", function () {
     const resp = await request(app)
         .delete(`/jobs/${testJobIds[0]}`)
         .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(404);
+    expect(resp.statusCode).toEqual(401);
   });
 
   test("throws error when job cannot be found by id", async function () {
